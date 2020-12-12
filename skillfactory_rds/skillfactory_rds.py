@@ -5,6 +5,7 @@ import pandas as pd
 from collections import Counter
 import operator
 import re
+import itertools as it
 
 data = pd.read_csv('movie_bd_v5.csv')
 #print(data.sample(5))
@@ -312,16 +313,135 @@ print(month_sum(data)) #21
 
 def summer (data):
     count = 0
-    for date in data['release_date']:
-        if int(re.search(r'\d+', date).group()) == 6 or\
-                int(re.search(r'\d+', date).group())== 7 or\
-                int(re.search(r'\d+', date).group())==8:
-            count+=1
-
+    for date in data['release_date'][data['release_date'].str.match('6|7|8')]:
+        count+=1
 
     return count
 
 print(summer(data)) #22
+
+
+def winter_director (data):
+    directors = []
+    for director in data['director'].str.split(pat="|")[data['release_date'].str.match('1(?!1|0)|2')]:
+        directors.append(director)
+
+    flat_list = [item for sublist in directors for item in sublist]
+    dirs_count = dict(Counter(flat_list))
+    sorted_dirs = sorted(dirs_count.items(), key=operator.itemgetter(1))
+    res = max(dirs_count.items(), key=operator.itemgetter(1))[0]
+
+
+
+    return res
+
+print(winter_director(data)) #23
+
+def company_title (data):
+    companies = []
+    companies_count = {}
+    count = 0
+    title_count = 0
+    for company in data['production_companies'].str.split(pat="|"):
+        companies.append(company) if company not in companies else companies
+    flat_list = [item for sublist in companies for item in sublist]
+
+    for company in flat_list:
+
+        for title in data['original_title'][data['production_companies'].str.contains(company)]:
+            if title is None:
+                pass
+            else:
+                #print(title)
+                title_count += 1
+                for letter in title:
+                    #print(letter)
+                    count += 1
+
+            #print(title_count)
+            #print(count)
+            companies_count[company] = round(count/title_count)
+        count = 0
+        title_count = 0
+
+    #dirs_count = dict(Counter(flat_list))
+    sorted_dirs = sorted(companies_count.items(), key=operator.itemgetter(1))
+    res = max(companies_count.items(), key=operator.itemgetter(1))[0]
+
+
+
+    return res
+
+#print(company_title(data)) #24
+
+
+def company_overview (data):
+    companies = []
+    companies_count = {}
+    count = 0
+    title_count = 0
+    for company in data['production_companies'].str.split(pat="|"):
+        companies.append(company) if company not in companies else companies
+    flat_list = [item for sublist in companies for item in sublist]
+
+    for company in flat_list:
+        for overview in data['overview'][data['production_companies'].str.contains(company)]:
+            if overview is None:
+                pass
+            else:
+                for words in overview:
+                    count += 1
+                    #print(count)
+                title_count += 1
+            companies_count[company] = round(count/title_count)
+            count = 0
+            title_count = 0
+
+    #dirs_count = dict(Counter(flat_list))
+    sorted_dirs = sorted(companies_count.items(), key=operator.itemgetter(1))
+    res = max(companies_count.items(), key=operator.itemgetter(1))[0]
+
+
+
+    return res
+
+#print(company_overview(data)) #25
+
+
+data_top_one = data.nlargest(19, ['vote_average'])
+#print(data_top_one['original_title']) #26
+
+
+
+def acters_together (data):
+    acters_list = []
+    acters_pairs = []
+    sorted_acters = []
+    for acters_set in data['cast'].str.split(pat="|"):
+        acters_list.append(acters_set)
+
+    for set in acters_list:
+        for subset in it.combinations(set, 2):
+            acters_pairs.append(sorted(list(subset)))
+
+
+    for acter_pair in acters_pairs:
+        string_pairs = ""
+        for ele in acter_pair :
+         string_pairs += ele
+        sorted_acters.append(string_pairs)
+
+
+
+
+    dirs_count = dict(Counter(sorted_acters))
+    sorted_dirs = sorted(dirs_count.items(), key=operator.itemgetter(1))
+    res = max(dirs_count.items(), key=operator.itemgetter(1))[0]
+
+    return res
+
+print(acters_together(data)) #27
+
 
 """
 
